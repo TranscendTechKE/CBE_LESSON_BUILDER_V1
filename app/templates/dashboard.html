@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CBE Lesson Builder — Curriculum Explorer</title>
+  <link rel="stylesheet" href="/static/css/curriculum-explorer.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">CBE LESSON BUILDER V1 · BUILD 08</div>
+      <h1>Curriculum Explorer & Lesson Planner</h1>
+      <p>Upload a Kenyan CBE curriculum design, select the verified curriculum unit, then generate a lesson plan from it.</p>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="card upload-card">
+      <div class="section-title">
+        <span class="step">1</span>
+        <div>
+          <h2>Load Curriculum Design</h2>
+          <p>Use the actual KICD PDF for the learning area.</p>
+        </div>
+      </div>
+
+      <div class="upload-row">
+        <label class="file-picker">
+          <input id="pdfFile" type="file" accept=".pdf,application/pdf">
+          <span id="fileName">Choose curriculum PDF</span>
+        </label>
+        <button id="uploadBtn" class="primary">Process PDF</button>
+      </div>
+      <div id="uploadStatus" class="status"></div>
+    </section>
+
+    <section id="explorer" class="card hidden">
+      <div class="section-title">
+        <span class="step">2</span>
+        <div>
+          <h2>Select Curriculum Unit</h2>
+          <p>The selections below come from the extracted curriculum document, not invented examples.</p>
+        </div>
+      </div>
+
+      <div id="documentSummary" class="summary"></div>
+
+      <div class="selectors">
+        <label>
+          <span>Theme</span>
+          <select id="themeSelect"><option value="">Select theme</option></select>
+        </label>
+
+        <label>
+          <span>Strand</span>
+          <select id="strandSelect" disabled><option value="">Select strand</option></select>
+        </label>
+
+        <label>
+          <span>Sub-strand</span>
+          <select id="unitSelect" disabled><option value="">Select sub-strand</option></select>
+        </label>
+      </div>
+
+      <div id="unitPreview" class="unit-preview hidden"></div>
+    </section>
+
+    <section id="generator" class="card hidden">
+      <div class="section-title">
+        <span class="step">3</span>
+        <div>
+          <h2>Lesson Plan Details</h2>
+          <p>These are teacher-level details. The curriculum fields remain tied to the selected unit.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label>Teacher name<input id="teacherName" type="text" placeholder="Teacher name"></label>
+        <label>School<input id="schoolName" type="text" placeholder="School name"></label>
+        <label>Lesson date<input id="lessonDate" type="date"></label>
+        <label>Duration (minutes)<input id="duration" type="number" value="40" min="20" max="180"></label>
+        <label>Class size<input id="classSize" type="number" min="1" max="200" placeholder="Optional"></label>
+        <label>Lesson number<input id="lessonNumber" type="number" value="1" min="1"></label>
+      </div>
+
+      <button id="generateBtn" class="primary large" disabled>Generate CBE Lesson Plan</button>
+    </section>
+
+    <section id="lessonOutput" class="card hidden">
+      <div class="output-header">
+        <div>
+          <div class="eyebrow">GENERATED FROM VERIFIED CURRICULUM</div>
+          <h2 id="planTitle">Lesson Plan</h2>
+        </div>
+        <button id="copyBtn" class="secondary">Copy JSON</button>
+      </div>
+      <div id="lessonContent"></div>
+    </section>
+  </main>
+
+  <script src="/static/js/curriculum-explorer.js"></script>
+</body>
+</html>

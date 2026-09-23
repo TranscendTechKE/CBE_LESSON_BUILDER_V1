@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <p class="eyebrow">BUILD 01 → BUILD 06</p>
+    <h1>Curriculum → Complete Lesson Plan</h1>
+    <p>
+        Upload a Kenyan CBE curriculum-design PDF, extract its curriculum structure,
+        review the detected information, generate a lesson plan, edit it, and print it.
+    </p>
+</section>
+
+<section class="card">
+    <h2>1. Upload Curriculum Design</h2>
+
+    <label class="dropzone" id="dropzone">
+        <input type="file" id="pdfFile" accept=".pdf">
+        <span class="drop-icon">PDF</span>
+        <strong>Choose a curriculum PDF</strong>
+        <small>Text-based PDFs work best in V1.</small>
+    </label>
+
+    <button id="processBtn" class="primary">Process Curriculum</button>
+
+    <div id="status" class="status"></div>
+</section>
+
+<section id="curriculumSection" class="card hidden">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">BUILD 02–03</p>
+            <h2>Curriculum Explorer</h2>
+        </div>
+        <span id="pageCount" class="badge"></span>
+    </div>
+
+    <div class="grid two">
+        <label>Learning Area
+            <input id="learningArea">
+        </label>
+        <label>Grade
+            <input id="grade">
+        </label>
+        <label>Strand
+            <input id="strand">
+        </label>
+        <label>Sub-strand
+            <input id="subStrand">
+        </label>
+    </div>
+
+    <label>Specific Learning Outcomes
+        <textarea id="outcomes" rows="6"></textarea>
+    </label>
+
+    <label>Inquiry Questions
+        <textarea id="questions" rows="4"></textarea>
+    </label>
+
+    <label>Learning Experiences
+        <textarea id="experiences" rows="4"></textarea>
+    </label>
+
+    <label>Resources
+        <textarea id="resources" rows="4"></textarea>
+    </label>
+
+    <div id="warnings" class="warnings"></div>
+
+    <button id="generateBtn" class="primary">Generate Lesson Plan</button>
+</section>
+
+<section id="lessonSection" class="card hidden">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">BUILD 04–05</p>
+            <h2>Teacher Lesson Editor</h2>
+        </div>
+        <button id="printBtn" class="secondary">Print / Save PDF</button>
+    </div>
+
+    <div id="lessonEditor"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/upload.js"></script>
+<script src="/static/js/lesson.js"></script>
+{% endblock %}
