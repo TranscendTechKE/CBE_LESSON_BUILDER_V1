@@ -1,1 +1,240 @@
-*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#f4f7fb;color:#172033}.topbar{padding:38px 6vw;background:#14213d;color:#fff}.topbar h1{margin:6px 0 8px;font-size:clamp(1.7rem,3vw,2.7rem)}.topbar p{margin:0;max-width:850px;color:#d9e2f2;line-height:1.6}.eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.12em;opacity:.8}.shell{width:min(1180px,92%);margin:28px auto 70px;display:grid;gap:20px}.card{background:#fff;border:1px solid #dfe5ef;border-radius:16px;padding:24px;box-shadow:0 5px 22px #1720330d}.section-title{display:flex;gap:14px;align-items:flex-start}.step{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#e9eef8;font-weight:800}.section-title h2{margin:0}.section-title p{margin:5px 0 0;color:#667085}.upload-row{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}.file-picker{display:flex;align-items:center;min-height:44px;border:1px dashed #9aa7ba;border-radius:9px;padding:0 14px;cursor:pointer;flex:1;min-width:250px}.file-picker input{display:none}.primary,.secondary{border:0;border-radius:9px;padding:11px 18px;font-weight:750;cursor:pointer}.primary{background:#1769e0;color:#fff}.primary:disabled{opacity:.45;cursor:not-allowed}.secondary{background:#eef2f7;color:#172033}.large{margin-top:22px;width:100%;padding:14px}.status{margin-top:14px;color:#526070}.hidden{display:none}.summary{margin:20px 0;padding:14px;border-radius:10px;background:#f6f8fc;line-height:1.7}.selectors{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}.selectors label,.form-grid label{font-weight:700;font-size:.88rem}.selectors select,.form-grid input{display:block;width:100%;margin-top:7px;padding:11px;border:1px solid #cbd3df;border-radius:8px;background:#fff;font:inherit}.unit-preview{margin-top:18px;border:1px solid #dce4ef;border-radius:12px;padding:20px}.unit-preview h3{margin-top:0}.tag{display:inline-block;margin:4px 4px 4px 0;padding:5px 8px;border-radius:999px;background:#edf3ff;font-size:.8rem}.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}.output-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}.plan-section{border-top:1px solid #e4e8ef;padding:18px 0}.plan-section h3{margin:0 0 10px}.plan-section ul{line-height:1.65}.flow-item{padding:12px;margin:8px 0;background:#f7f9fc;border-radius:8px}.flow-item strong{display:block;margin-bottom:4px}@media(max-width:800px){.selectors,.form-grid{grid-template-columns:1fr}.output-header{flex-direction:column}}
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0;
+    font-family: Inter, Segoe UI, Arial, sans-serif;
+    background: #f4f7fb;
+    color: #172033
+}
+
+.topbar {
+    padding: 38px 6vw;
+    background: #14213d;
+    color: #fff
+}
+
+.topbar h1 {
+    margin: 6px 0 8px;
+    font-size: clamp(1.7rem, 3vw, 2.7rem)
+}
+
+.topbar p {
+    margin: 0;
+    max-width: 850px;
+    color: #d9e2f2;
+    line-height: 1.6
+}
+
+.eyebrow {
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    opacity: .8
+}
+
+.shell {
+    width: min(1180px, 92%);
+    margin: 28px auto 70px;
+    display: grid;
+    gap: 20px
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #dfe5ef;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 5px 22px #1720330d
+}
+
+.section-title {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start
+}
+
+.step {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #e9eef8;
+    font-weight: 800
+}
+
+.section-title h2 {
+    margin: 0
+}
+
+.section-title p {
+    margin: 5px 0 0;
+    color: #667085
+}
+
+.upload-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 22px;
+    flex-wrap: wrap
+}
+
+.file-picker {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    border: 1px dashed #9aa7ba;
+    border-radius: 9px;
+    padding: 0 14px;
+    cursor: pointer;
+    flex: 1;
+    min-width: 250px
+}
+
+.file-picker input {
+    display: none
+}
+
+.primary,
+.secondary {
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 18px;
+    font-weight: 750;
+    cursor: pointer
+}
+
+.primary {
+    background: #1769e0;
+    color: #fff
+}
+
+.primary:disabled {
+    opacity: .45;
+    cursor: not-allowed
+}
+
+.secondary {
+    background: #eef2f7;
+    color: #172033
+}
+
+.large {
+    margin-top: 22px;
+    width: 100%;
+    padding: 14px
+}
+
+.status {
+    margin-top: 14px;
+    color: #526070
+}
+
+.hidden {
+    display: none
+}
+
+.summary {
+    margin: 20px 0;
+    padding: 14px;
+    border-radius: 10px;
+    background: #f6f8fc;
+    line-height: 1.7
+}
+
+.selectors {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px
+}
+
+.selectors label,
+.form-grid label {
+    font-weight: 700;
+    font-size: .88rem
+}
+
+.selectors select,
+.form-grid input {
+    display: block;
+    width: 100%;
+    margin-top: 7px;
+    padding: 11px;
+    border: 1px solid #cbd3df;
+    border-radius: 8px;
+    background: #fff;
+    font: inherit
+}
+
+.unit-preview {
+    margin-top: 18px;
+    border: 1px solid #dce4ef;
+    border-radius: 12px;
+    padding: 20px
+}
+
+.unit-preview h3 {
+    margin-top: 0
+}
+
+.tag {
+    display: inline-block;
+    margin: 4px 4px 4px 0;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: #edf3ff;
+    font-size: .8rem
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 20px
+}
+
+.output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px
+}
+
+.plan-section {
+    border-top: 1px solid #e4e8ef;
+    padding: 18px 0
+}
+
+.plan-section h3 {
+    margin: 0 0 10px
+}
+
+.plan-section ul {
+    line-height: 1.65
+}
+
+.flow-item {
+    padding: 12px;
+    margin: 8px 0;
+    background: #f7f9fc;
+    border-radius: 8px
+}
+
+.flow-item strong {
+    display: block;
+    margin-bottom: 4px
+}
+
+@media(max-width:800px) {
+
+    .selectors,
+    .form-grid {
+        grid-template-columns: 1fr
+    }
+
+    .output-header {
+        flex-direction: column
+    }
+}

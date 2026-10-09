@@ -47,7 +47,7 @@ async function uploadPdf() {
   }
 }
 
-function setStatus(message, error=false) {
+function setStatus(message, error = false) {
   $("uploadStatus").textContent = message;
   $("uploadStatus").style.color = error ? "#b42318" : "";
 }
@@ -141,6 +141,9 @@ async function selectUnit() {
 
 async function generateLessonPlan() {
   if (!state.selectedUnit) return;
+  console.log("STATE BEFORE GENERATION:", JSON.stringify(state, null, 2));
+  console.log("SELECTED UNIT:", state.selectedUnit);
+  console.log("DOCUMENT ID:", state.documentId);
 
   const payload = {
     document_id: state.documentId,
@@ -159,7 +162,7 @@ async function generateLessonPlan() {
   try {
     const response = await fetch("/api/curriculum/lesson-plan", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
     const plan = await response.json();
@@ -176,37 +179,216 @@ async function generateLessonPlan() {
 
 function renderLessonPlan(plan) {
   $("lessonOutput").classList.remove("hidden");
-  $("planTitle").textContent = `${plan.curriculum.sub_strand_code} — ${plan.curriculum.sub_strand}`;
+
+  $("planTitle").textContent =
+    `${plan.sub_strand || "CBE Lesson Plan"}`;
+
+  const developmentSteps =
+    plan.lesson_development?.steps || [];
+
+  const developmentHtml = developmentSteps.map(step => `
+    <div class="flow-item">
+      <strong>
+        Step ${step.number}: ${escapeHtml(step.title)}
+        (${step.duration_minutes} minutes)
+      </strong>
+      <ul>
+        ${(step.activities || [])
+      .map(activity => `<li>${escapeHtml(activity)}</li>`)
+      .join("")}
+      </ul>
+    </div>
+  `).join("");
 
   $("lessonContent").innerHTML = `
+
     <div class="plan-section">
-      <h3>Curriculum Anchor</h3>
-      <p><strong>Theme:</strong> ${escapeHtml(plan.curriculum.theme_code)} — ${escapeHtml(plan.curriculum.theme)}</p>
-      <p><strong>Strand:</strong> ${escapeHtml(plan.curriculum.strand_code)} — ${escapeHtml(plan.curriculum.strand)}</p>
-      <p><strong>Sub-strand:</strong> ${escapeHtml(plan.curriculum.sub_strand_code)} — ${escapeHtml(plan.curriculum.sub_strand)}</p>
-      <p><strong>Source PDF pages:</strong> ${(plan.curriculum.source_pdf_pages || []).join(", ")}</p>
+      <h3>Lesson Information</h3>
+
+      <p><strong>School:</strong>
+        ${escapeHtml(plan.school)}
+      </p>
+
+      <p><strong>Teacher:</strong>
+        ${escapeHtml(plan.teacher)}
+      </p>
+
+      <p><strong>Grade:</strong>
+        ${escapeHtml(plan.grade)}
+      </p>
+
+      <p><strong>Learning Area:</strong>
+        ${escapeHtml(plan.learning_area)}
+      </p>
+
+      <p><strong>Date:</strong>
+        ${escapeHtml(plan.date)}
+      </p>
+
+      <p><strong>Time:</strong>
+        ${escapeHtml(plan.time)}
+      </p>
+
+      <p><strong>Duration:</strong>
+        ${escapeHtml(plan.duration_minutes)} minutes
+      </p>
+
+      <p><strong>Class Size:</strong>
+        ${escapeHtml(plan.roll || "Not specified")}
+      </p>
+
+      <p><strong>Lesson Number:</strong>
+        ${escapeHtml(plan.lesson_number)}
+      </p>
     </div>
 
-    ${listBlock("Specific Learning Outcomes", plan.specific_learning_outcomes)}
-    ${listBlock("Lesson Objectives", plan.lesson_objectives.map(x => x.objective))}
-    ${listBlock("Key Inquiry Questions", plan.key_inquiry_questions)}
-    ${tagBlock("Core Competencies", plan.core_competencies)}
-    ${tagBlock("Pertinent and Contemporary Issues", plan.pertinent_and_contemporary_issues)}
-    ${tagBlock("Values", plan.values)}
+    <div class="plan-section">
+      <h3>Curriculum Anchor</h3>
+
+      <p><strong>Theme:</strong>
+        ${escapeHtml(plan.theme)}
+      </p>
+
+      <p><strong>Strand:</strong>
+        ${escapeHtml(plan.strand)}
+      </p>
+
+      <p><strong>Sub-strand:</strong>
+        ${escapeHtml(plan.sub_strand)}
+      </p>
+
+      <p><strong>Source PDF pages:</strong>
+        ${(plan.source_pages || []).join(", ") || "Not recorded"}
+      </p>
+
+      <p><strong>Source document:</strong>
+        ${escapeHtml(plan.source_document || "Not recorded")}
+      </p>
+    </div>
+
+    ${listBlock(
+    "Specific Learning Outcomes",
+    plan.specific_learning_outcomes
+  )}
+
+    ${listBlock(
+    "Key Inquiry Questions",
+    plan.key_inquiry_questions
+  )}
+
+    ${tagBlock(
+    "Core Competencies",
+    plan.core_competencies
+  )}
+
+    ${tagBlock(
+    "Pertinent and Contemporary Issues",
+    plan.pcis
+  )}
+
+    ${tagBlock(
+    "Values",
+    plan.values
+  )}
+
+    ${tagBlock(
+    "Links to Other Subjects",
+    plan.links_to_other_subjects
+  )}
+
+    ${tagBlock(
+    "Learning Resources",
+    plan.learning_resources
+  )}
 
     <div class="plan-section">
       <h3>Lesson Flow</h3>
-      <div class="flow-item"><strong>Introduction</strong>${escapeHtml(plan.lesson_flow.introduction.activity)}</div>
-      ${plan.lesson_flow.development.activities.map(a => `<div class="flow-item"><strong>Activity ${a.step}</strong>${escapeHtml(a.activity)}</div>`).join("")}
-      <div class="flow-item"><strong>Assessment</strong>${escapeHtml(plan.lesson_flow.assessment.activity)}</div>
-      <div class="flow-item"><strong>Reflection</strong>${escapeHtml(plan.lesson_flow.reflection.teacher_prompt)}</div>
+
+      <div class="flow-item">
+        <strong>
+          Introduction
+          (${escapeHtml(plan.introduction?.duration_minutes || 0)} minutes)
+        </strong>
+
+        <ul>
+          ${(plan.introduction?.activities || [])
+      .map(activity => `<li>${escapeHtml(activity)}</li>`)
+      .join("")}
+        </ul>
+      </div>
+
+      <div class="flow-item">
+        <strong>
+          Lesson Development
+          (${escapeHtml(plan.lesson_development?.duration_minutes || 0)} minutes)
+        </strong>
+
+        ${developmentHtml}
+      </div>
+
+      <div class="flow-item">
+        <strong>
+          Conclusion
+          (${escapeHtml(plan.conclusion?.duration_minutes || 0)} minutes)
+        </strong>
+
+        <ul>
+          ${(plan.conclusion?.activities || [])
+      .map(activity => `<li>${escapeHtml(activity)}</li>`)
+      .join("")}
+        </ul>
+      </div>
     </div>
 
-    ${listBlock("Assessment Approaches", plan.assessment.approaches)}
-    ${listBlock("Resources", plan.resources)}
+    ${listBlock(
+        "Assessment",
+        plan.assessment
+      )}
+
+    ${listBlock(
+        "Assessment Approaches",
+        plan.assessment_approaches
+      )}
+
+    ${listBlock(
+        "Extended Activities",
+        plan.extended_activities
+      )}
+
+    ${listBlock(
+        "Reflection",
+        plan.reflection
+      )}
+
+    <div class="plan-section">
+      <h3>Teacher Self-Evaluation</h3>
+
+      <p><strong>What went well:</strong>
+        ${escapeHtml(plan.teacher_self_evaluation?.what_went_well)}
+      </p>
+
+      <p><strong>Areas for improvement:</strong>
+        ${escapeHtml(plan.teacher_self_evaluation?.areas_for_improvement)}
+      </p>
+
+      <p><strong>Learners needing support:</strong>
+        ${escapeHtml(plan.teacher_self_evaluation?.learners_needing_support)}
+      </p>
+
+      <p><strong>Action for next lesson:</strong>
+        ${escapeHtml(plan.teacher_self_evaluation?.action_for_next_lesson)}
+      </p>
+
+      <p><strong>Teacher signature:</strong>
+        ${escapeHtml(plan.teacher_self_evaluation?.teacher_signature)}
+      </p>
+    </div>
   `;
 
-  $("lessonOutput").scrollIntoView({behavior:"smooth", block:"start"});
+  $("lessonOutput").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
 
 function listBlock(title, items) {
@@ -227,7 +409,7 @@ async function fetchJson(url) {
 }
 
 function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(value ?? "").replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 function escapeAttr(value) {

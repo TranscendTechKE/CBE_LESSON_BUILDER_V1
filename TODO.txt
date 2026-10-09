@@ -1,0 +1,1 @@
+integrate/add a feature that takes in the date/time of lesson plan generation, and that of the actual time of that lesson then suggests to the teacher lesson materials that need preparation before the lesson, a time saving feature[] 
