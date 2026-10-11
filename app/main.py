@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.routes.curriculum import router as curriculum_router
+from app.routes.curriculum_profiles import router as curriculum_profiles_router
 
 from app.config import settings
 
@@ -21,6 +22,7 @@ app.mount(
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 app.include_router(curriculum_router)
+app.include_router(curriculum_profiles_router)
 
 @app.get("/health")
 def health():
