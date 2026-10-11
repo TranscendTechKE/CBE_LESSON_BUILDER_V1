@@ -1,6 +1,7 @@
 const state = {
   documentId: null,
   document: null,
+  profile: null,
   selectedTheme: null,
   selectedUnit: null,
   lessonPlan: null
@@ -33,10 +34,25 @@ async function uploadPdf() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || "PDF processing failed.");
 
+    const profileResponse = await fetch(
+      `/api/curriculum/${data.document_id}/profile`
+    );
+
+    const profile = await profileResponse.json();
+
+    if (!profileResponse.ok) {
+      throw new Error(
+        profile.detail || "Could not load the curriculum profile."
+      );
+    }
     state.documentId = data.document_id;
+    state.profile = profile;
     state.document = data.summary;
     renderSummary(data.summary);
-    populateThemes(data.summary.themes);
+    populateThemes(
+      state.profile.content_nodes,
+      state.profile.hierarchy_labels
+    );
 
     $("explorer").classList.remove("hidden");
     $("generator").classList.add("hidden");
@@ -61,56 +77,107 @@ function renderSummary(summary) {
   `;
 }
 
-function populateThemes(themes) {
-  $("themeSelect").innerHTML = `<option value="">Select theme</option>` +
-    themes.map(t => `<option value="${escapeAttr(t.code)}">${escapeHtml(t.code)} — ${escapeHtml(t.title)}</option>`).join("");
-  $("strandSelect").innerHTML = `<option value="">Select strand</option>`;
-  $("unitSelect").innerHTML = `<option value="">Select sub-strand</option>`;
+function populateThemes(nodes, labels = []) {
+  const names = [
+    labels[0] || "Theme",
+    labels[1] || "Strand",
+    labels[2] || "Sub-strand"
+  ];
+
+  $("themeLabel").textContent = names[0];
+  $("strandLabel").textContent = names[1];
+  $("unitLabel").textContent = names[2];
+
+  $("themeSelect").innerHTML =
+    `<option value="">Select ${escapeHtml(names[0].toLowerCase())}</option>` +
+    nodes.map(node =>
+      `<option value="${escapeAttr(node.code)}">${escapeHtml(node.code)} — ${escapeHtml(node.title)}</option>`
+    ).join("");
+
+  $("strandSelect").innerHTML =
+    `<option value="">Select ${escapeHtml(names[1].toLowerCase())}</option>`;
+
+  $("unitSelect").innerHTML =
+    `<option value="">Select ${escapeHtml(names[2].toLowerCase())}</option>`;
+
   $("strandSelect").disabled = true;
   $("unitSelect").disabled = true;
+
+  state.selectedTheme = null;
+  state.selectedUnit = null;
+
   $("unitPreview").classList.add("hidden");
+  $("generator").classList.add("hidden");
+  $("lessonOutput").classList.add("hidden");
   $("generateBtn").disabled = true;
 }
 
-async function selectTheme() {
+function selectTheme() {
   const code = $("themeSelect").value;
+
   $("strandSelect").disabled = true;
   $("unitSelect").disabled = true;
   $("unitPreview").classList.add("hidden");
+  $("generator").classList.add("hidden");
+  $("lessonOutput").classList.add("hidden");
   $("generateBtn").disabled = true;
-  if (!code) return;
 
-  state.selectedTheme = code;
-  const units = await fetchJson(`/api/curriculum/${state.documentId}/themes/${encodeURIComponent(code)}/units`);
+  state.selectedTheme = code || null;
+  state.selectedUnit = null;
 
-  const strands = [];
-  const seen = new Set();
-  for (const unit of units) {
-    if (!seen.has(unit.strand_code)) {
-      seen.add(unit.strand_code);
-      strands.push({ code: unit.strand_code, name: unit.strand });
-    }
-  }
+  const labels = state.profile.hierarchy_labels;
+  const strandLabel = labels[1] || "Strand";
+  const unitLabel = labels[2] || "Sub-strand";
 
-  $("strandSelect").innerHTML = `<option value="">Select strand</option>` +
-    strands.map(s => `<option value="${escapeAttr(s.code)}">${escapeHtml(s.code)} — ${escapeHtml(s.name)}</option>`).join("");
-  $("strandSelect").disabled = false;
-  $("unitSelect").innerHTML = `<option value="">Select sub-strand</option>`;
+  const theme = state.profile.content_nodes.find(
+    node => node.code === code
+  );
+
+  const strands = theme?.children || [];
+
+  $("strandSelect").innerHTML =
+    `<option value="">Select ${escapeHtml(strandLabel.toLowerCase())}</option>` +
+    strands.map(node =>
+      `<option value="${escapeAttr(node.code)}">${escapeHtml(node.code)} — ${escapeHtml(node.title)}</option>`
+    ).join("");
+
+  $("unitSelect").innerHTML =
+    `<option value="">Select ${escapeHtml(unitLabel.toLowerCase())}</option>`;
+
+  $("strandSelect").disabled = strands.length === 0;
 }
 
-async function selectStrand() {
+function selectStrand() {
   const strandCode = $("strandSelect").value;
+
   $("unitSelect").disabled = true;
   $("unitPreview").classList.add("hidden");
+  $("generator").classList.add("hidden");
+  $("lessonOutput").classList.add("hidden");
   $("generateBtn").disabled = true;
-  if (!strandCode) return;
 
-  const units = await fetchJson(`/api/curriculum/${state.documentId}/themes/${encodeURIComponent(state.selectedTheme)}/units`);
-  const filtered = units.filter(u => u.strand_code === strandCode);
+  state.selectedUnit = null;
 
-  $("unitSelect").innerHTML = `<option value="">Select sub-strand</option>` +
-    filtered.map(u => `<option value="${escapeAttr(u.sub_strand_code)}">${escapeHtml(u.sub_strand_code)} — ${escapeHtml(u.sub_strand)}${u.lessons ? ` (${u.lessons} Lessons)` : ""}</option>`).join("");
-  $("unitSelect").disabled = false;
+  const labels = state.profile.hierarchy_labels;
+  const unitLabel = labels[2] || "Sub-strand";
+
+  const theme = state.profile.content_nodes.find(
+    node => node.code === state.selectedTheme
+  );
+
+  const strand = theme?.children.find(
+    node => node.code === strandCode
+  );
+
+  const units = strand?.children || [];
+
+  $("unitSelect").innerHTML =
+    `<option value="">Select ${escapeHtml(unitLabel.toLowerCase())}</option>` +
+    units.map(node =>
+      `<option value="${escapeAttr(node.code)}">${escapeHtml(node.code)} — ${escapeHtml(node.title)}${node.lessons ? ` (${node.lessons} Lessons)` : ""}</option>`
+    ).join("");
+
+  $("unitSelect").disabled = units.length === 0;
 }
 
 async function selectUnit() {

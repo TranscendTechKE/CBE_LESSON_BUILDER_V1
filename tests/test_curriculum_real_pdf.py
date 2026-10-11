@@ -10,6 +10,9 @@ from pathlib import Path
 
 from app.services.curriculum_parser import parse_curriculum_pdf
 from app.services.validator import validate_curriculum
+from app.services.curriculum_document_adapter import (
+    adapt_curriculum_document,
+)
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "GRADE.9.ENGLISH.pdf"
@@ -63,3 +66,51 @@ def test_real_document_has_multiple_themes():
     assert len(document.themes) >= 14
     assert document.themes[0].code == "1.0"
     assert document.themes[1].code == "2.0"
+
+
+def test_real_grade_9_english_adapts_to_profile():
+    if not FIXTURE.exists():
+        return
+
+    document = parse_curriculum_pdf(FIXTURE)
+    profile = adapt_curriculum_document(document)
+
+    assert profile.source_verified is False
+    assert profile.learning_area == "English"
+    assert profile.grade == "Grade 9"
+    assert profile.content_nodes
+
+    # Preserve the first theme and its hierarchy.
+    theme = profile.content_nodes[0]
+    assert theme.code == document.themes[0].code
+    assert theme.title == document.themes[0].title
+    assert theme.node_type == "theme"
+    assert theme.children
+
+    strand = theme.children[0]
+    assert strand.node_type == "strand"
+    assert strand.children
+
+    # Preserve the first actual curriculum unit.
+    unit = strand.children[0]
+    original_unit = document.themes[0].units[0]
+
+    assert unit.code == original_unit.sub_strand_code
+    assert unit.title == original_unit.sub_strand
+    assert unit.node_type == "sub_strand"
+    assert unit.lessons == original_unit.lessons
+    assert unit.specific_learning_outcomes == (
+        original_unit.specific_learning_outcomes
+    )
+    assert unit.source_pages == original_unit.source_pdf_pages
+
+    # Every parsed unit should remain represented in the profile.
+    original_count = sum(
+        len(theme.units) for theme in document.themes
+    )
+    adapted_count = sum(
+        len(strand.children)
+        for theme in profile.content_nodes
+        for strand in theme.children
+    )
+    assert adapted_count == original_count

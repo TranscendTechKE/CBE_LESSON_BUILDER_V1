@@ -21,6 +21,9 @@ from pydantic import BaseModel, Field
 
 from app.services.curriculum_parser import parse_curriculum_pdf
 from app.services.lesson_plan_generator import generate_lesson_plan
+from app.services.curriculum_document_adapter import (
+    adapt_curriculum_document,
+)
 from app.models.curriculum import CurriculumDocument
 
 router = APIRouter(prefix="/api/curriculum", tags=["CBE Curriculum"])
@@ -90,6 +93,21 @@ def get_curriculum(document_id: str):
     if not doc:
         raise HTTPException(404, "Curriculum document not found. Upload it again.")
     return doc.model_dump()
+
+
+@router.get("/{document_id}/profile")
+def get_curriculum_profile(document_id: str):
+    doc = DOCUMENTS.get(document_id)
+    if not doc:
+        raise HTTPException(
+            404,
+            "Curriculum document not found. Upload it again.",
+        )
+
+    profile = adapt_curriculum_document(doc)
+    profile.profile_id = f"uploaded-{document_id}"
+
+    return profile.model_dump()
 
 
 @router.get("/{document_id}/themes")

@@ -9,9 +9,9 @@
 <body>
   <header class="topbar">
     <div>
-      <div class="eyebrow">CBE LESSON BUILDER V1 · BUILD 08</div>
+      <div class="eyebrow">CBE LESSON BUILDER V1 · BUILD 11D-2A</div>
       <h1>Curriculum Explorer & Lesson Planner</h1>
-      <p>Upload a Kenyan CBE curriculum design, select the verified curriculum unit, then generate a lesson plan from it.</p>
+      <p>Upload a Kenyan CBE curriculum design, explore extracted curriculum content, then generate a lesson plan. Check the source and extracted content before classroom use.</p>
     </div>
   </header>
 
@@ -48,17 +48,17 @@
 
       <div class="selectors">
         <label>
-          <span>Theme</span>
+          <span id="themeLabel">Theme</span>
           <select id="themeSelect"><option value="">Select theme</option></select>
         </label>
 
         <label>
-          <span>Strand</span>
+          <span id="strandLabel">Strand</span>
           <select id="strandSelect" disabled><option value="">Select strand</option></select>
         </label>
 
         <label>
-          <span>Sub-strand</span>
+          <span id="unitLabel">Sub-strand</span>
           <select id="unitSelect" disabled><option value="">Select sub-strand</option></select>
         </label>
       </div>
@@ -90,7 +90,7 @@
     <section id="lessonOutput" class="card hidden">
       <div class="output-header">
         <div>
-          <div class="eyebrow">GENERATED FROM VERIFIED CURRICULUM</div>
+          <div class="eyebrow">GENERATED FROM EXTRACTED CURRICULUM CONTENT</div>
           <h2 id="planTitle">Lesson Plan</h2>
         </div>
         <button id="copyBtn" class="secondary">Copy JSON</button>
