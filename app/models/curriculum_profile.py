@@ -66,9 +66,10 @@ class CurriculumContentNode(BaseModel):
     source_pages: list[int] = Field(default_factory=list)
 
     # Additional structured metadata where necessary.
-    metadata: dict[str, str | int | float | bool | None] = Field(
-        default_factory=dict
-    )
+    metadata: dict[
+        str,
+        str | int | float | bool | list[int] | None,
+    ] = Field(default_factory=dict)
 
 
 class CurriculumProfile(BaseModel):
