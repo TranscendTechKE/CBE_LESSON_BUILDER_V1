@@ -214,6 +214,7 @@ def generate_lesson_plan(
     class_size: int | None = None,
     lesson_number: int = 1,
     lesson_time: str = "",
+    learning_area: str | None = None,
 ) -> dict[str, Any]:
     """Generate BUILD 09 standardized lesson-plan data from a verified unit."""
 
@@ -238,7 +239,10 @@ def generate_lesson_plan(
         school=school_name,
         teacher=teacher_name,
         grade=_field(unit, "grade", "grade_level", default="Grade 9"),
-        learning_area=_field(unit, "learning_area", "subject", default="English"),
+        learning_area=(
+        learning_area
+            or _field(unit, "learning_area", "subject", default="English")
+        ),
         date=lesson_date,
         time=lesson_time,
         duration_minutes=duration,

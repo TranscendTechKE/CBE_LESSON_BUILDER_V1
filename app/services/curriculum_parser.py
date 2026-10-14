@@ -290,14 +290,48 @@ def _find_theme_for_page(page_number: int, themes: list[CurriculumTheme]) -> Cur
     return None
 
 
+
 def _extract_metadata(pages: list[dict]) -> tuple[str | None, str | None, str | None]:
     first_text = "\n".join(page["text"] for page in pages[:9])
-
     title = "Junior School Curriculum Design"
-    if re.search(r"\bEnglish\b", first_text, re.IGNORECASE):
-        learning_area = "English"
-    else:
-        learning_area = None
+
+    # Prefer explicit subject headings over incidental mentions.
+    subject_patterns = [
+        (r"\bGENERAL LEARNING OUTCOMES FOR\s+ENGLISH\b", "English"),
+        (r"\bGENERAL LEARNING OUTCOMES FOR\s+KISWAHILI\b", "Kiswahili"),
+        (r"\bGENERAL LEARNING OUTCOMES FOR\s+MATHEMATICS\b", "Mathematics"),
+        (r"\bGENERAL LEARNING OUTCOMES FOR\s+INTEGRATED SCIENCE\b", "Integrated Science"),
+        (r"\bGENERAL LEARNING OUTCOMES FOR\s+AGRICULTURE\b", "Agriculture"),
+        (r"\bGENERAL LEARNING OUTCOMES FOR\s+SOCIAL STUDIES\b", "Social Studies"),
+        (r"\bGENERAL LEARNING OUTCOMES FOR\s+INDIGENOUS LANGUAGES\b", "Indigenous Languages"),
+    ]
+
+    learning_area = None
+    for pattern, area in subject_patterns:
+        if re.search(pattern, first_text, re.IGNORECASE):
+            learning_area = area
+            break
+
+    # Fallback: inspect short, standalone title-page lines only.
+    if learning_area is None:
+        title_lines = [
+            re.sub(r"\s+", " ", line).strip().upper()
+            for page in pages[:3]
+            for line in page["text"].splitlines()
+        ]
+        title_aliases = {
+            "ENGLISH": "English",
+            "KISWAHILI": "Kiswahili",
+            "MATHEMATICS": "Mathematics",
+            "INTEGRATED SCIENCE": "Integrated Science",
+            "SCIENCE": "Integrated Science",
+            "AGRICULTURE": "Agriculture",
+            "SOCIAL STUDIES": "Social Studies",
+        }
+        for line in title_lines:
+            if line in title_aliases:
+                learning_area = title_aliases[line]
+                break
 
     grade_match = re.search(r"\bGrade\s+(\d+)\b", first_text, re.IGNORECASE)
     grade = f"Grade {grade_match.group(1)}" if grade_match else None

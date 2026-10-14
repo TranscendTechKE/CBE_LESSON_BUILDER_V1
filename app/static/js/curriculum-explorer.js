@@ -521,3 +521,77 @@ async function copyJson() {
   $("copyBtn").textContent = "Copied";
   setTimeout(() => $("copyBtn").textContent = "Copy JSON", 1200);
 }
+
+async function downloadLessonPlanWord() {
+  const plan = state.lessonPlan;
+  if (!plan) {
+    alert("Generate a lesson plan before downloading.");
+    return;
+  }
+
+  const button = $("downloadWordBtn");
+  button.disabled = true;
+  button.textContent = "Preparing Word document…";
+
+  try {
+    const response = await fetch(
+      "/api/curriculum/lesson-plan/export-docx",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan })
+      }
+    );
+
+    if (!response.ok) {
+      let message = "Word export failed.";
+      try {
+        const error = await response.json();
+        message = error.detail || message;
+      } catch (_) {}
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = makeLessonPlanFilename(plan);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Download Word";
+  }
+}
+
+function filenamePart(value) {
+  return String(value ?? "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function makeLessonPlanFilename(plan) {
+  const parts = [
+    plan.grade,
+    plan.theme,
+    plan.strand,
+    plan.sub_strand
+  ]
+    .map(filenamePart)
+    .filter(Boolean);
+
+  // If there is no theme, the empty theme is automatically omitted.
+  return `${parts.join("_") || "CBE_Lesson_Plan"}.docx`;
+}
+
+$("downloadWordBtn").addEventListener(
+  "click",
+  downloadLessonPlanWord
+);

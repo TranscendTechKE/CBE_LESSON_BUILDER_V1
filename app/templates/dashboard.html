@@ -9,9 +9,10 @@
 <body>
   <header class="topbar">
     <div>
-      <div class="eyebrow">CBE LESSON BUILDER V1 · BUILD 11D-2A</div>
-      <h1>Curriculum Explorer & Lesson Planner</h1>
-      <p>Upload a Kenyan CBE curriculum design, explore extracted curriculum content, then generate a lesson plan. Check the source and extracted content before classroom use.</p>
+      <div class="eyebrow">TRANSCENDTECH · EDUCATION TECHNOLOGY</div>
+      <h1>CBE Lesson Builder</h1>
+      <p>Curriculum Explorer &amp; Lesson Planner</p>
+      <p>Explore curriculum content, prepare structured lesson plans, and review the extracted source before classroom use.</p>
     </div>
   </header>
 
@@ -93,11 +94,55 @@
           <div class="eyebrow">GENERATED FROM EXTRACTED CURRICULUM CONTENT</div>
           <h2 id="planTitle">Lesson Plan</h2>
         </div>
-        <button id="copyBtn" class="secondary">Copy JSON</button>
+        <div class="output-actions">
+          <button id="copyBtn" class="secondary">Copy JSON</button>
+          <button id="downloadWordBtn" class="primary">Download Word</button>
+        </div>
       </div>
       <div id="lessonContent"></div>
     </section>
   </main>
+
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-columns">
+          <section class="footer-column">
+            <p class="footer-brand">
+              <strong>CBE Lesson Builder</strong>
+              <span class="footer-byline">by TranscendTech</span>
+            </p>
+
+            <p>
+              An educational technology tool supporting teachers with curriculum
+              exploration and structured lesson preparation.
+            </p>
+          </section>
+
+          <section class="footer-column">
+            <h3>Curriculum &amp; responsible use</h3>
+
+            <p>
+              Generated plans and extracted content may contain omissions or
+              inaccuracies. Teachers should verify the source and review each plan
+              against the applicable official curriculum design and school
+              requirements before classroom use.
+            </p>
+
+            <p>
+              This is an independent tool, not an official product of or endorsed
+              by the Kenya Institute of Curriculum Development (KICD) or the
+              Ministry of Education. Curriculum materials remain subject to their
+              respective ownership and usage conditions.
+            </p>
+          </section>
+        </div>
+
+        <div class="footer-copyright">
+          &copy; 2026 TranscendTech. All rights reserved in original product materials.
+        </div>
+      </div>
+    </footer>
 
   <script src="/static/js/curriculum-explorer.js"></script>
 </body>

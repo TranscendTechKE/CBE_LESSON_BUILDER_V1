@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.services.curriculum_parser import parse_curriculum_pdf
@@ -28,6 +28,7 @@ from app.services.pdf_processor import extract_pdf_pages
 from app.services.flexible_curriculum_extractor import (
     parse_curriculum_pages,
 )
+from app.services.lesson_plan_exporter import export_lesson_plan_docx
 from app.models.curriculum_profile import CurriculumProfile
 from app.models.curriculum import CurriculumDocument
 
@@ -386,12 +387,13 @@ class LessonPlanRequest(BaseModel):
     lesson_number: int = Field(default=1, ge=1)
 
 
-
 @router.post("/lesson-plan")
 def create_lesson_plan(request: LessonPlanRequest):
     profile = PROFILES.get(request.document_id)
 
     if profile is not None:
+        learning_area = profile.learning_area or "Unknown"
+
         unit = _find_profile_unit(
             profile,
             request.sub_strand_code,
@@ -403,6 +405,8 @@ def create_lesson_plan(request: LessonPlanRequest):
                 404,
                 "Curriculum document not found. Upload it again.",
             )
+
+        learning_area = doc.learning_area or "Unknown"
 
         unit = None
         for theme in doc.themes:
@@ -424,6 +428,30 @@ def create_lesson_plan(request: LessonPlanRequest):
         duration_minutes=request.duration_minutes,
         class_size=request.class_size,
         lesson_number=request.lesson_number,
+        learning_area=learning_area,
     )
 
     return JSONResponse(lesson_plan)
+
+class LessonPlanExportRequest(BaseModel):
+    plan: dict[str, Any]
+
+
+@router.post("/lesson-plan/export-docx")
+def download_lesson_plan(request: LessonPlanExportRequest):
+    if not request.plan:
+        raise HTTPException(400, "No lesson plan was provided.")
+
+    output = export_lesson_plan_docx(request.plan)
+
+    return StreamingResponse(
+        output,
+        media_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "wordprocessingml.document"
+        ),
+        headers={
+            "Content-Disposition":
+                'attachment; filename="cbe_lesson_plan.docx"'
+        },
+    )
