@@ -178,6 +178,8 @@ def parse_curriculum_pages(
     has_sub_strand = False
     warnings: list[str] = []
     observed_pages: set[int] = set()
+    curriculum_ended = False
+    in_rubric = False
 
     for page in pages:
         pdf_page = page.get("pdf_page")
@@ -188,6 +190,19 @@ def parse_curriculum_pages(
             continue
 
         observed_pages.add(pdf_page)
+
+        # The table of contents is not the curriculum body.
+        if "TABLE OF CONTENTS" in text.upper():
+            continue
+
+        # The appendix has its own numbering and must not be
+        # parsed as the teaching hierarchy.
+        if curriculum_ended:
+            continue
+
+        if re.search(r"\bAPPENDIX\s*:", text, re.IGNORECASE):
+            curriculum_ended = True
+            continue
 
         if not isinstance(text, str) or not text.strip():
             warnings.append(
@@ -227,6 +242,22 @@ def parse_curriculum_pages(
             numbered_sub_match = NUMBERED_SUB_STRAND_RE.match(line)
             numbered_match = NUMBERED_HEADING_RE.match(line)
 
+            # Assessment rubrics are supplementary, not sub-strand content.
+            if in_rubric:
+                if explicit_strand_match:
+                    in_rubric = False
+                else:
+                    continue
+
+            if re.match(
+                r"^(?:suggested\s+)?assessment\s+rubrics?\b",
+                line,
+                re.IGNORECASE,
+            ):
+                in_rubric = True
+                current_section = None
+                continue
+
             if theme_match:
                 code, title = theme_match.groups()
                 title, _ = _split_lessons(title)
@@ -246,17 +277,41 @@ def parse_curriculum_pages(
             if explicit_strand_match:
                 code, title = explicit_strand_match.groups()
                 title, _ = _split_lessons(title)
-                current_strand = CurriculumContentNode(
-                    code=code,
-                    title=title,
-                    node_type="strand",
-                    parent_code=current_theme.code if current_theme else None,
-                    source_pages=[pdf_page],
+
+                siblings = (
+                    current_theme.children if current_theme else roots
                 )
-                if current_theme:
-                    current_theme.children.append(current_strand)
+
+                existing = next(
+                    (
+                        node for node in siblings
+                        if node.node_type == "strand"
+                        and node.code == code
+                    ),
+                    None,
+                )
+
+                if existing is not None:
+                    current_strand = existing
+
+                    if len(title) > len(existing.title):
+                        existing.title = title
+
+                    if pdf_page not in existing.source_pages:
+                        existing.source_pages.append(pdf_page)
                 else:
-                    roots.append(current_strand)
+                    current_strand = CurriculumContentNode(
+                        code=code,
+                        title=title,
+                        node_type="strand",
+                        parent_code=current_theme.code if current_theme else None,
+                        source_pages=[pdf_page],
+                    )
+
+                    if current_theme:
+                        current_theme.children.append(current_strand)
+                    else:
+                        roots.append(current_strand)
 
                 current_unit = None
                 current_section = None
@@ -320,6 +375,17 @@ def parse_curriculum_pages(
             if numbered_match:
                 code, title = numbered_match.groups()
                 title, lessons = _split_lessons(title)
+
+                # Repeated 1.0 / 2.0 / 3.0 / 4.0 headings
+                # are strand labels, not child sub-strands.
+                if (
+                    current_strand is not None
+                    and current_theme is None
+                    and code == current_strand.code
+                ):
+                    current_unit = None
+                    current_section = None
+                    continue
 
                 # In a strand-only structure, 1.1 is a sub-strand.
                 # Within a theme, 1.1 is treated as a strand.

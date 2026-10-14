@@ -53,6 +53,8 @@ async function uploadPdf() {
       state.profile.content_nodes,
       state.profile.hierarchy_labels
     );
+    console.log("PROFILE HIERARCHY:", state.profile.hierarchy_labels);
+    console.log("PROFILE FIRST NODE:", state.profile.content_nodes[0]);
 
     $("explorer").classList.remove("hidden");
     $("generator").classList.add("hidden");
@@ -77,6 +79,7 @@ function renderSummary(summary) {
   `;
 }
 
+
 function populateThemes(nodes, labels = []) {
   const names = [
     labels[0] || "Theme",
@@ -87,6 +90,9 @@ function populateThemes(nodes, labels = []) {
   $("themeLabel").textContent = names[0];
   $("strandLabel").textContent = names[1];
   $("unitLabel").textContent = names[2];
+
+  // Hide the third selector when the curriculum has fewer than 3 levels.
+  $("unitSelect").closest("label").hidden = labels.length < 3;
 
   $("themeSelect").innerHTML =
     `<option value="">Select ${escapeHtml(names[0].toLowerCase())}</option>` +
@@ -112,98 +118,124 @@ function populateThemes(nodes, labels = []) {
   $("generateBtn").disabled = true;
 }
 
-function selectTheme() {
-  const code = $("themeSelect").value;
-
-  $("strandSelect").disabled = true;
-  $("unitSelect").disabled = true;
+function resetUnitSelection() {
+  state.selectedUnit = null;
   $("unitPreview").classList.add("hidden");
   $("generator").classList.add("hidden");
   $("lessonOutput").classList.add("hidden");
   $("generateBtn").disabled = true;
+}
+
+async function showSelectedUnit(code) {
+  resetUnitSelection();
+  if (!code) return;
+
+  try {
+    const unit = await fetchJson(
+      `/api/curriculum/${state.documentId}/unit/${encodeURIComponent(code)}`
+    );
+
+    state.selectedUnit = unit;
+
+    $("unitPreview").innerHTML = `
+      <h3>${escapeHtml(unit.sub_strand_code || unit.code || "")} — ${escapeHtml(unit.sub_strand || unit.title || "")}</h3>
+      <p><strong>${escapeHtml(state.profile.hierarchy_labels[0] || "Section")}:</strong> ${escapeHtml(unit.theme_title || unit.strand || "Not specified")}</p>
+      <p><strong>Strand:</strong> ${escapeHtml(unit.strand_code || "")} ${escapeHtml(unit.strand || "")}</p>
+      <p><strong>Learning area:</strong> ${escapeHtml(unit.learning_area || state.profile.learning_area || "Not specified")}</p>
+      <p><strong>Lessons allocated:</strong> ${unit.lessons ?? "Not specified"}</p>
+      ${listBlock("Specific Learning Outcomes", unit.specific_learning_outcomes)}
+      ${listBlock("Suggested Learning Experiences", unit.suggested_learning_experiences)}
+      ${listBlock("Key Inquiry Questions", unit.key_inquiry_questions)}
+      ${tagBlock("Core Competencies", unit.core_competencies)}
+      ${tagBlock("PCIs", unit.pertinent_and_contemporary_issues)}
+      ${tagBlock("Values", unit.values)}
+      ${tagBlock("Links to Other Subjects", unit.links_to_other_subjects)}
+      <small>Source PDF pages: ${(unit.source_pdf_pages || unit.source_pages || []).join(", ")}</small>
+    `;
+
+    $("unitPreview").classList.remove("hidden");
+    $("generator").classList.remove("hidden");
+    $("generateBtn").disabled = false;
+  } catch (error) {
+    state.selectedUnit = null;
+    $("unitPreview").innerHTML =
+      `<p>Could not load this curriculum unit: ${escapeHtml(error.message || "Unknown error")}</p>`;
+    $("unitPreview").classList.remove("hidden");
+    $("generator").classList.add("hidden");
+    $("generateBtn").disabled = true;
+  }
+}
+
+function selectTheme() {
+  const code = $("themeSelect").value;
+  resetUnitSelection();
 
   state.selectedTheme = code || null;
-  state.selectedUnit = null;
 
-  const labels = state.profile.hierarchy_labels;
-  const strandLabel = labels[1] || "Strand";
-  const unitLabel = labels[2] || "Sub-strand";
+  $("strandSelect").disabled = true;
+  $("unitSelect").disabled = true;
 
   const theme = state.profile.content_nodes.find(
     node => node.code === code
   );
 
-  const strands = theme?.children || [];
+  const children = theme?.children || [];
+  const labels = state.profile.hierarchy_labels || [];
+  const strandLabel = labels[1] || "Strand";
+  const unitLabel = labels[2] || "Sub-strand";
 
   $("strandSelect").innerHTML =
     `<option value="">Select ${escapeHtml(strandLabel.toLowerCase())}</option>` +
-    strands.map(node =>
+    children.map(node =>
       `<option value="${escapeAttr(node.code)}">${escapeHtml(node.code)} — ${escapeHtml(node.title)}</option>`
     ).join("");
 
   $("unitSelect").innerHTML =
     `<option value="">Select ${escapeHtml(unitLabel.toLowerCase())}</option>`;
 
-  $("strandSelect").disabled = strands.length === 0;
+  $("strandSelect").disabled = children.length === 0;
+
+  // One-level hierarchy: the selected root is itself the content unit.
+  if (code && labels.length === 1 && !children.length) {
+    showSelectedUnit(code);
+  }
 }
 
 function selectStrand() {
-  const strandCode = $("strandSelect").value;
+  const code = $("strandSelect").value;
+  resetUnitSelection();
 
   $("unitSelect").disabled = true;
-  $("unitPreview").classList.add("hidden");
-  $("generator").classList.add("hidden");
-  $("lessonOutput").classList.add("hidden");
-  $("generateBtn").disabled = true;
 
-  state.selectedUnit = null;
-
-  const labels = state.profile.hierarchy_labels;
-  const unitLabel = labels[2] || "Sub-strand";
-
+  const labels = state.profile.hierarchy_labels || [];
   const theme = state.profile.content_nodes.find(
     node => node.code === state.selectedTheme
   );
 
-  const strand = theme?.children.find(
-    node => node.code === strandCode
+  const strand = theme?.children?.find(
+    node => node.code === code
   );
 
-  const units = strand?.children || [];
+  const children = strand?.children || [];
 
+  // Two-level hierarchy: the second selector contains the selectable units.
+  if (labels.length === 2) {
+    if (code) showSelectedUnit(code);
+    return;
+  }
+
+  // Three-level hierarchy: populate the third selector.
   $("unitSelect").innerHTML =
-    `<option value="">Select ${escapeHtml(unitLabel.toLowerCase())}</option>` +
-    units.map(node =>
+    `<option value="">Select ${escapeHtml((labels[2] || "Sub-strand").toLowerCase())}</option>` +
+    children.map(node =>
       `<option value="${escapeAttr(node.code)}">${escapeHtml(node.code)} — ${escapeHtml(node.title)}${node.lessons ? ` (${node.lessons} Lessons)` : ""}</option>`
     ).join("");
 
-  $("unitSelect").disabled = units.length === 0;
+  $("unitSelect").disabled = children.length === 0;
 }
 
 async function selectUnit() {
-  const code = $("unitSelect").value;
-  $("generateBtn").disabled = true;
-  $("unitPreview").classList.add("hidden");
-  if (!code) return;
-
-  const unit = await fetchJson(`/api/curriculum/${state.documentId}/unit/${encodeURIComponent(code)}`);
-  state.selectedUnit = unit;
-
-  $("unitPreview").innerHTML = `
-    <h3>${escapeHtml(unit.sub_strand_code)} — ${escapeHtml(unit.sub_strand)}</h3>
-    <p><strong>Strand:</strong> ${escapeHtml(unit.strand_code)} — ${escapeHtml(unit.strand)}</p>
-    <p><strong>Lessons allocated:</strong> ${unit.lessons ?? "Not specified"}</p>
-    ${listBlock("Specific Learning Outcomes", unit.specific_learning_outcomes)}
-    ${listBlock("Key Inquiry Questions", unit.key_inquiry_questions)}
-    ${tagBlock("Core Competencies", unit.core_competencies)}
-    ${tagBlock("PCIs", unit.pertinent_and_contemporary_issues)}
-    ${tagBlock("Values", unit.values)}
-    ${tagBlock("Links to Other Subjects", unit.links_to_other_subjects)}
-    <small>Source PDF pages: ${(unit.source_pdf_pages || []).join(", ")}</small>
-  `;
-  $("unitPreview").classList.remove("hidden");
-  $("generator").classList.remove("hidden");
-  $("generateBtn").disabled = false;
+  await showSelectedUnit($("unitSelect").value);
 }
 
 async function generateLessonPlan() {
