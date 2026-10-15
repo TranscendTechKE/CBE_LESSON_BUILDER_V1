@@ -19,6 +19,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.config import settings
 from app.services.curriculum_parser import parse_curriculum_pdf
 from app.services.lesson_plan_generator import generate_lesson_plan
 from app.services.curriculum_document_adapter import (
@@ -137,6 +138,18 @@ def _document_summary(doc: CurriculumDocument) -> dict[str, Any]:
 async def upload_curriculum(file: UploadFile = File(...)):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "Please upload a PDF curriculum design.")
+
+    # Check the upload size before loading the entire PDF into memory.
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+    file.file.seek(0)
+
+    max_bytes = settings.max_upload_mb * 1024 * 1024
+    if file_size > max_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"PDF exceeds the {settings.max_upload_mb} MB upload limit."
+        )
 
     content = await file.read()
     if not content:
